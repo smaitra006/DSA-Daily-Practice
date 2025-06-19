@@ -140,3 +140,116 @@ public:
 // ------------------------------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------------------------------
 
+//? 907. Sum of Subarray Minimums
+//? Given an array of integers arr, find the sum of min(b), where b ranges over every (contiguous) subarray of arr. Since the answer may be large, return the answer modulo 109 
+
+//* Topics : Stack, Monotonic stack
+
+//* Intuition of brute force approach :
+// Find all the subarrays, find minimum in each of them and add it to the 
+
+//* Solution :
+class Solution {
+public:
+    int sumSubarrayMins(vector<int>& arr) {
+        const int MOD = 1e9 + 7;
+        long long ans = 0, n = arr.size();
+
+        for(int i = 0; i < n; i++) {
+            for(int j = i; j < n; j++) {
+                int min = INT_MAX;
+                for(int k = i; k <= j; k++) {
+                    if(arr[k] < min) min = arr[k];
+                }
+                ans += min;
+            }
+        }
+        return (ans % MOD);
+    }
+};
+
+//* Time Complexity : O(n^3) - n^2 for finding all subarray and another n for finding minimum each time
+//* Space Complexity : O(1)
+
+//* Intuition of Optimal approach :
+// Here in a range where the current element in the smallest element , any subarray formed in that range including the current element will have the current element at its minimum element. Hence to the left of the current element we find the left smallest element and to the right to the current element we find the next smallest element. In between these two , any subarray we form including the current element will have current element as minimum. So that number of subarrays will be (number of elements in left) * (numbers of elements in right) and the contiribution of the element in the total sum will be (number of elements in left) * (numbers of elements in right) * (curr element value).
+
+//* Solution :
+
+class Solution {
+public:
+    // Find the previous smaller element's index for each element
+    void findPrevSmaller(vector<int>& arr, vector<int>& prevSmaller) {
+        int n = arr.size();
+        stack<int> st;  // Stack stores indices, not values
+
+        for (int i = 0; i < n; i++) {
+            // Pop elements that are >= current element
+            while (!st.empty() && arr[st.top()] >= arr[i]) {
+                st.pop();
+            }
+
+            // If stack is not empty, top contains index of previous smaller element
+            if (!st.empty()) {
+                prevSmaller[i] = st.top();
+            }
+            // If stack is empty, no previous smaller element exists (stays -1)
+
+            st.push(i);  // Push current index
+        }
+    }
+
+    // Find the next smaller OR EQUAL element's index for each element
+    void findNextSmaller(vector<int>& arr, vector<int>& nextSmaller) {
+        int n = arr.size();
+        stack<int> st;  // Stack stores indices, not values
+
+        for (int i = n - 1; i >= 0; i--) {
+            // Pop elements that are > current element (strict inequality)
+            while (!st.empty() && arr[st.top()] > arr[i]) {
+                st.pop();
+            }
+
+            // If stack is not empty, top contains index of next smaller/equal element
+            if (!st.empty()) {
+                nextSmaller[i] = st.top();
+            }
+            // If stack is empty, no next smaller/equal element exists (stays n)
+
+            st.push(i);  // Push current index
+        }
+    }
+
+    int sumSubarrayMins(vector<int>& arr) {
+        const int MOD = 1e9 + 7;  // For handling large numbers
+        int n = arr.size();
+        
+        // Initialize with boundary values
+        vector<int> prevSmaller(n, -1);    // -1 means no previous smaller element
+        vector<int> nextSmaller(n, n);     // n means no next smaller element
+        
+        // Find previous and next smaller elements
+        findPrevSmaller(arr, prevSmaller);
+        findNextSmaller(arr, nextSmaller);
+        
+        long long ans = 0;
+        
+        for (int i = 0; i < n; i++) {
+            // Calculate number of subarrays where arr[i] is the minimum
+            // Left side: elements from (prevSmaller[i] + 1) to i
+            int leftCount = i - prevSmaller[i];
+            
+            // Right side: elements from i to (nextSmaller[i] - 1)  
+            int rightCount = nextSmaller[i] - i;
+            
+            // Total subarrays where arr[i] is minimum = leftCount * rightCount
+            long long contribution = (1LL * arr[i] * leftCount * rightCount) % MOD;
+            ans = (ans + contribution) % MOD;
+        }
+        
+        return ans;
+    }
+};
+
+//* Time Complexity : O(n)
+//* Space Complexity : O(n)
