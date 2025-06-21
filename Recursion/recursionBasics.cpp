@@ -192,7 +192,7 @@ void printPermutations(vector<int> nums, int n, vector<int> &temp, vector<vector
 }
 
 //* TC: O(n * n!)
-//* SC: O(n × n!)
+//* SC: O(n + n!) -> O(n!)
 
 int main()
 {
